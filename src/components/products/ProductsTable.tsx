@@ -82,12 +82,6 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                 {/* Actions */}
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Link 
-                      href={`/products/${product._id}/edit`}
-                      className="p-2 text-gray-400 hover:text-[#00c853] hover:bg-green-50 rounded-md transition-all"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Link>
                     
                     <button 
                       onClick={() => handleDelete(product._id, product.name)}

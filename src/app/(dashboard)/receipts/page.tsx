@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 export default function ReceiptsPage() {
   const { receipts, fetchReceipts, loading, error } = useReceiptsStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const router = useRouter();
 
@@ -18,10 +19,16 @@ export default function ReceiptsPage() {
 
   // Hackathon tip: Simple frontend filtering!
   const filteredReceipts = receipts.filter(
-    (r) =>
-      r.receiptNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (r.reference &&
-        r.reference.toLowerCase().includes(searchQuery.toLowerCase())),
+    (r) => {
+      const matchesSearch =
+        r.receiptNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.reference &&
+          r.reference.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesStatus =
+        statusFilter === "All" ? true : r.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    },
   );
 
   return (
@@ -53,6 +60,19 @@ export default function ReceiptsPage() {
               className="w-full h-10 pl-10 pr-4 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
             />
           </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-10 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium outline-none focus:border-green-500"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Draft">Draft</option>
+            <option value="Waiting">Waiting</option>
+            <option value="Ready">Ready</option>
+            <option value="Done">Done</option>
+            <option value="Canceled">Canceled</option>
+          </select>
 
           <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1">
             <button className="p-1.5 bg-green-50 text-green-700 rounded-lg shadow-sm">

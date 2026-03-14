@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import axios from "axios";
+import { DashboardActivity, DashboardFilters, DashboardKpis } from "@/types/dashboard.types";
 
 interface DashboardState {
-  data: any | null;
-  activities: any[];
+  data: DashboardKpis | null;
+  activities: DashboardActivity[];
   loading: boolean;
   error: string | null;
-  fetchDashboard: () => Promise<void>;
+  lastUpdated: string | null;
+  fetchDashboard: (filters?: DashboardFilters) => Promise<void>;
 }
 
 export const useDashboardStore = create<DashboardState>((set) => ({
@@ -14,26 +16,39 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   activities: [],
   loading: false,
   error: null,
+  lastUpdated: null,
 
-  fetchDashboard: async () => {
-    set({ loading: true, error: null });
+  fetchDashboard: async (filters = {}) => {
+    set((state) => ({ ...state, loading: true, error: null }));
+
     try {
-      // Fetch both KPI and Activities in parallel for real-time speed
       const [kpiRes, activityRes] = await Promise.all([
-        axios.get("/api/dashboard/kpi"),
-        axios.get("/api/dashboard/activities?limit=10")
+        axios.get("/api/dashboard/kpis", {
+          params: filters,
+          headers: { "Cache-Control": "no-cache" },
+        }),
+        axios.get("/api/dashboard/activities", {
+          params: { ...filters, limit: 10 },
+          headers: { "Cache-Control": "no-cache" },
+        }),
       ]);
 
-      set({ 
-        data: kpiRes.data.data, 
-        activities: activityRes.data.data, 
-        loading: false 
+      set({
+        data: kpiRes.data.data,
+        activities: activityRes.data.data,
+        loading: false,
+        lastUpdated: new Date().toISOString(),
       });
-    } catch (err: any) {
-      set({ 
-        error: err.response?.data?.message || "Failed to sync dashboard", 
-        loading: false 
-      });
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || "Failed to sync dashboard"
+        : "Failed to sync dashboard";
+
+      set((state) => ({
+        ...state,
+        error: message,
+        loading: false,
+      }));
     }
   },
 }));

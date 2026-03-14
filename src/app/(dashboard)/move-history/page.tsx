@@ -2,15 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { useLedgerStore } from "@/store/ledger.store";
-import { History, Search, ArrowUpRight, ArrowDownLeft, SlidersHorizontal, RefreshCcw } from "lucide-react";
+import { useSettingsStore } from "@/store/settings.store";
+import { History, Search, ArrowUpRight, ArrowDownLeft, RefreshCcw } from "lucide-react";
 
 export default function MoveHistoryPage() {
   const { entries, fetchLedger, loading } = useLedgerStore();
+  const { warehouses, locations, fetchSettings } = useSettingsStore();
   const [search, setSearch] = useState("");
+  const [sourceType, setSourceType] = useState("");
+  const [warehouseId, setWarehouseId] = useState("");
+  const [locationId, setLocationId] = useState("");
 
   useEffect(() => {
-    fetchLedger();
-  }, [fetchLedger]);
+    void fetchSettings();
+  }, [fetchSettings]);
+
+  useEffect(() => {
+    void fetchLedger({
+      sourceType,
+      warehouseId,
+      locationId,
+      limit: 100,
+    });
+  }, [fetchLedger, locationId, sourceType, warehouseId]);
 
   const filteredEntries = entries.filter((entry) =>
     entry.sourceNo.toLowerCase().includes(search.toLowerCase()) ||
@@ -43,8 +57,53 @@ export default function MoveHistoryPage() {
               className="w-full h-10 pl-10 pr-4 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#00c853] focus:ring-1 focus:ring-[#00c853] transition-all"
             />
           </div>
+          <select
+            value={sourceType}
+            onChange={(event) => setSourceType(event.target.value)}
+            className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm outline-none focus:border-green-500"
+          >
+            <option value="">All types</option>
+            <option value="Receipt">Receipts</option>
+            <option value="Delivery">Deliveries</option>
+            <option value="Transfer">Transfers</option>
+            <option value="Adjustment">Adjustments</option>
+          </select>
+          <select
+            value={warehouseId}
+            onChange={(event) => {
+              setWarehouseId(event.target.value);
+              setLocationId("");
+            }}
+            className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm outline-none focus:border-green-500"
+          >
+            <option value="">All warehouses</option>
+            {warehouses.map((warehouse) => (
+              <option key={warehouse._id} value={warehouse._id}>
+                {warehouse.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={locationId}
+            onChange={(event) => setLocationId(event.target.value)}
+            className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm outline-none focus:border-green-500"
+          >
+            <option value="">All locations</option>
+            {locations
+              .filter((location) =>
+                warehouseId
+                  ? typeof location.warehouseId !== "string" &&
+                    location.warehouseId?._id === warehouseId
+                  : true,
+              )
+              .map((location) => (
+                <option key={location._id} value={location._id}>
+                  {location.name}
+                </option>
+              ))}
+          </select>
           <button 
-            onClick={() => fetchLedger()}
+            onClick={() => void fetchLedger({ sourceType, warehouseId, locationId, limit: 100 })}
             className="p-2.5 text-gray-500 hover:text-[#00c853] bg-white border border-gray-200 rounded-lg transition-colors"
           >
             <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />

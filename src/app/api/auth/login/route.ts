@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import User from "@/models/user.model";
 import { comparePassword } from "@/lib/hash";
 import { generateToken } from "@/lib/jwt";
+import { SESSION_COOKIE_NAME } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
@@ -33,13 +34,28 @@ export async function POST(req: Request) {
     }
 
     const token = generateToken(user._id.toString());
-
-    console.log("Success! Token generated."); // 👈 Log 5
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: "Login successful",
       token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
+
+    response.cookies.set({
+      name: SESSION_COOKIE_NAME,
+      value: token,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch (error) {
     console.error("Server Error in Login:", error);
     return NextResponse.json(

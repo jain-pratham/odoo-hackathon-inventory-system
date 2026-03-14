@@ -15,10 +15,19 @@ export interface LedgerEntry {
   note?: string;
 }
 
+type LedgerFilters = {
+  productId?: string;
+  warehouseId?: string;
+  locationId?: string;
+  sourceType?: "Receipt" | "Delivery" | "Transfer" | "Adjustment" | "";
+  sourceId?: string;
+  limit?: number;
+};
+
 interface LedgerState {
   entries: LedgerEntry[];
   loading: boolean;
-  fetchLedger: (params?: any) => Promise<void>;
+  fetchLedger: (params?: LedgerFilters) => Promise<void>;
 }
 
 export const useLedgerStore = create<LedgerState>((set) => ({
@@ -30,7 +39,7 @@ export const useLedgerStore = create<LedgerState>((set) => ({
     try {
       const res = await axios.get("/api/ledger", { params });
       set({ entries: res.data.data || [], loading: false });
-    } catch (error) {
+    } catch {
       set({ loading: false });
     }
   },

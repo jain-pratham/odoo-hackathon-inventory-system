@@ -18,8 +18,8 @@ interface SettingsState {
   locations: Location[];
   loading: boolean;
   fetchSettings: () => Promise<void>;
-  createWarehouse: (data: any) => Promise<void>;
-  createLocation: (data: any) => Promise<void>;
+  createWarehouse: (data: { name: string; address?: string }) => Promise<void>;
+  createLocation: (data: { name: string; warehouseId: string }) => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -35,24 +35,18 @@ export const useSettingsStore = create<SettingsState>((set) => ({
         axios.get("/api/locations")
       ]);
       set({ warehouses: wRes.data, locations: lRes.data, loading: false });
-    } catch (error) {
+    } catch {
       set({ loading: false });
     }
   },
 
   createWarehouse: async (data) => {
-    const token = localStorage.getItem("token");
-    const res = await axios.post("/api/warehouses", data, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await axios.post("/api/warehouses", data);
     set((state) => ({ warehouses: [res.data.warehouse, ...state.warehouses] }));
   },
 
   createLocation: async (data) => {
-    const token = localStorage.getItem("token");
-    const res = await axios.post("/api/locations", data, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await axios.post("/api/locations", data);
     set((state) => ({ locations: [res.data.location, ...state.locations] }));
   }
 }));

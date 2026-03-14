@@ -38,7 +38,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
 
@@ -48,7 +48,7 @@ export async function PUT(
     const body = await req.json();
 
     const product = await Product.findByIdAndUpdate(
-      params.id,
+      (await params).id,
       body,
       { new: true }
     );
@@ -78,14 +78,14 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
 
   try {
     getUserFromToken(req);
 
-    const product = await Product.findByIdAndDelete(params.id);
+    const product = await Product.findByIdAndDelete((await params).id);
 
     if (!product) {
       return NextResponse.json(
