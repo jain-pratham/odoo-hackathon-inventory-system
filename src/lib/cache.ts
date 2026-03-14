@@ -1,54 +1,149 @@
-import { NextRequest, NextResponse } from "next/server";
-import { connectDB }from "@/lib/db";
-import { createReceipt, listReceipts } from "@/services/receipt.service";
+import {redis} from "@/lib/redis";
 
-export async function GET() {
+const DEFAULT_TTL_SECONDS = 60;
+
+export async function getCache<T>(key: string): Promise<T | null> {
+  const value = await redis.get(key);
+
+  if (!value) return null;
+
   try {
-    await connectDB();
-
-    const receipts = await listReceipts();
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: receipts,
-      },
-      { status: 200 }
-    );
-  } catch (error: any) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: error.message || "Failed to fetch receipts.",
-      },
-      { status: 500 }
-    );
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
   }
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    await connectDB();
+export async function setCache(
+  key: string,
+  value: unknown,
+  ttlSeconds: number = DEFAULT_TTL_SECONDS
+) {
+  await redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
+}
 
-    const body = await req.json();
+export async function deleteCache(key: string) {
+  await redis.del(key);
+}
 
-    const receipt = await createReceipt(body);
+export async function deleteCacheByPattern(pattern: string) {
+  let cursor = "0";
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Receipt created successfully.",
-        data: receipt,
-      },
-      { status: 201 }
-    );
-  } catch (error: any) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: error.message || "Failed to create receipt.",
-      },
-      { status: 400 }
-    );
+  do {
+    const result = await redis.scan(cursor, "MATCH", pattern, "COUNT", 100);
+    cursor = result[0];
+    const keys = result[1];
+
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  } while (cursor !== "0");
+}
+
+/* -------------------- Receipts -------------------- */
+
+export function buildReceiptListCacheKey() {
+  return "receipts:list";
+}
+
+export function buildReceiptDetailCacheKey(id: string) {
+  return `receipts:detail:${id}`;
+}
+
+export async function invalidateReceiptCache(id?: string) {
+  const keysToDelete: string[] = [buildReceiptListCacheKey()];
+
+  if (id) {
+    keysToDelete.push(buildReceiptDetailCacheKey(id));
   }
+
+  if (keysToDelete.length > 0) {
+    await redis.del(...keysToDelete);
+  }
+}
+
+/* -------------------- Deliveries -------------------- */
+
+export function buildDeliveryListCacheKey() {
+  return "deliveries:list";
+}
+
+export function buildDeliveryDetailCacheKey(id: string) {
+  return `deliveries:detail:${id}`;
+}
+
+export async function invalidateDeliveryCache(id?: string) {
+  const keysToDelete: string[] = [buildDeliveryListCacheKey()];
+
+  if (id) {
+    keysToDelete.push(buildDeliveryDetailCacheKey(id));
+  }
+
+  if (keysToDelete.length > 0) {
+    await redis.del(...keysToDelete);
+  }
+}
+
+/* -------------------- Transfers -------------------- */
+
+export function buildTransferListCacheKey() {
+  return "transfers:list";
+}
+
+export function buildTransferDetailCacheKey(id: string) {
+  return `transfers:detail:${id}`;
+}
+
+export async function invalidateTransferCache(id?: string) {
+  const keysToDelete: string[] = [buildTransferListCacheKey()];
+
+  if (id) {
+    keysToDelete.push(buildTransferDetailCacheKey(id));
+  }
+
+  if (keysToDelete.length > 0) {
+    await redis.del(...keysToDelete);
+  }
+}
+
+/* -------------------- Adjustments -------------------- */
+
+export function buildAdjustmentListCacheKey() {
+  return "adjustments:list";
+}
+
+export function buildAdjustmentDetailCacheKey(id: string) {
+  return `adjustments:detail:${id}`;
+}
+
+export async function invalidateAdjustmentCache(id?: string) {
+  const keysToDelete: string[] = [buildAdjustmentListCacheKey()];
+
+  if (id) {
+    keysToDelete.push(buildAdjustmentDetailCacheKey(id));
+  }
+
+  if (keysToDelete.length > 0) {
+    await redis.del(...keysToDelete);
+  }
+}
+
+/* -------------------- Ledger -------------------- */
+
+export async function invalidateLedgerCache() {
+  await deleteCacheByPattern("ledger:*");
+}
+
+/* -------------------- Dashboard -------------------- */
+
+export function buildDashboardKpisCacheKey() {
+  return "dashboard:kpis";
+}
+
+export function buildDashboardActivitiesCacheKey(limit: number) {
+  return `dashboard:activities:${limit}`;
+}
+
+export async function invalidateDashboardCache() {
+  await deleteCacheByPattern("dashboard:*");
 }
