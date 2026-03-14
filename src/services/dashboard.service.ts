@@ -4,6 +4,7 @@ import Transfer from "@/models/Transfer";
 import Adjustment from "@/models/Adjustment";
 import StockBalance from "@/models/StockBalance";
 import StockLedger from "@/models/StockLedger";
+import "@/models/warehouse.model";
 import Product from "@/models/product.model";
 import { Types } from "mongoose";
 import {
