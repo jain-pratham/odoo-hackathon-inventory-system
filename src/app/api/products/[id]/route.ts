@@ -7,11 +7,11 @@ import { NextRequest } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
 
-  const { id } = await params;
+  const { id } = await context.params;
 
   const cacheKey = `products:detail:${id}`;
 
@@ -37,14 +37,14 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
 
   try {
     getUserFromToken(req);
 
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await req.json();
 
     const product = await Product.findByIdAndUpdate(id, body, { new: true });
@@ -73,14 +73,14 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
 
   try {
     getUserFromToken(req);
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     const product = await Product.findByIdAndDelete(id);
 
