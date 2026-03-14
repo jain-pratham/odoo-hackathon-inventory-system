@@ -59,3 +59,80 @@ export async function invalidateReceiptCache(id?: string) {
     await redis.del(...keysToDelete);
   }
 }
+
+
+export function buildDeliveryListCacheKey() {
+  return "deliveries:list";
+}
+
+export function buildDeliveryDetailCacheKey(id: string) {
+  return `deliveries:detail:${id}`;
+}
+
+export async function invalidateDeliveryCache(id?: string) {
+  const keysToDelete: string[] = [buildDeliveryListCacheKey()];
+
+  if (id) {
+    keysToDelete.push(buildDeliveryDetailCacheKey(id));
+  }
+
+  if (keysToDelete.length > 0) {
+    await redis.del(...keysToDelete);
+  }
+}
+
+export function buildTransferListCacheKey() {
+  return "transfers:list";
+}
+
+export function buildTransferDetailCacheKey(id: string) {
+  return `transfers:detail:${id}`;
+}
+
+export async function invalidateTransferCache(id?: string) {
+  const keysToDelete: string[] = [buildTransferListCacheKey()];
+
+  if (id) {
+    keysToDelete.push(buildTransferDetailCacheKey(id));
+  }
+
+  if (keysToDelete.length > 0) {
+    await redis.del(...keysToDelete);
+  }
+}
+
+export function buildAdjustmentListCacheKey() {
+  return "adjustments:list";
+}
+
+export function buildAdjustmentDetailCacheKey(id: string) {
+  return `adjustments:detail:${id}`;
+}
+
+export async function invalidateAdjustmentCache(id?: string) {
+  const keysToDelete: string[] = [buildAdjustmentListCacheKey()];
+
+  if (id) {
+    keysToDelete.push(buildAdjustmentDetailCacheKey(id));
+  }
+
+  if (keysToDelete.length > 0) {
+    await redis.del(...keysToDelete);
+  }
+}
+
+export async function invalidateLedgerCache() {
+  await deleteCacheByPattern("ledger:*");
+}
+
+export function buildDashboardKpisCacheKey() {
+  return "dashboard:kpis";
+}
+
+export function buildDashboardActivitiesCacheKey(limit: number) {
+  return `dashboard:activities:${limit}`;
+}
+
+export async function invalidateDashboardCache() {
+  await deleteCacheByPattern("dashboard:*");
+}
