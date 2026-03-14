@@ -7,11 +7,13 @@ import { NextRequest } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
 
-  const cacheKey = `products:detail:${params.id}`;
+  const { id } = await params;
+
+  const cacheKey = `products:detail:${id}`;
 
   const cached = await getCache(cacheKey);
 
@@ -19,8 +21,7 @@ export async function GET(
     return NextResponse.json(cached);
   }
 
-  const product = await Product.findById(params.id)
-    .populate("categoryId");
+  const product = await Product.findById(id).populate("categoryId");
 
   if (!product) {
     return NextResponse.json(
@@ -34,8 +35,6 @@ export async function GET(
   return NextResponse.json(product);
 }
 
-
-
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -45,13 +44,10 @@ export async function PUT(
   try {
     getUserFromToken(req);
 
+    const { id } = await params;
     const body = await req.json();
 
-    const product = await Product.findByIdAndUpdate(
-      (await params).id,
-      body,
-      { new: true }
-    );
+    const product = await Product.findByIdAndUpdate(id, body, { new: true });
 
     if (!product) {
       return NextResponse.json(
@@ -75,7 +71,6 @@ export async function PUT(
   }
 }
 
-
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -85,7 +80,9 @@ export async function DELETE(
   try {
     getUserFromToken(req);
 
-    const product = await Product.findByIdAndDelete((await params).id);
+    const { id } = await params;
+
+    const product = await Product.findByIdAndDelete(id);
 
     if (!product) {
       return NextResponse.json(
