@@ -44,7 +44,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
           headers: {
             "Cache-Control": "no-store",
           },
-        }
+        },
       );
     }
 
@@ -64,7 +64,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         headers: {
           "Cache-Control": "no-store",
         },
-      }
+      },
     );
   } catch (error: any) {
     return NextResponse.json(
@@ -72,7 +72,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         success: false,
         message: error.message || "Failed to fetch transfer.",
       },
-      { status: 404 }
+      { status: 404 },
     );
   }
 }
@@ -99,7 +99,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
           headers: {
             "Retry-After": String(rateLimit.retryAfter),
           },
-        }
+        },
       );
     }
 
@@ -116,7 +116,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         message: "Transfer updated successfully.",
         data: transfer,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     return NextResponse.json(
@@ -124,7 +124,7 @@ export async function PUT(req: NextRequest, context: RouteContext) {
         success: false,
         message: error.message || "Failed to update transfer.",
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

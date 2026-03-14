@@ -56,5 +56,7 @@ export async function listLedgerEntries(input: ListLedgerInput = {}) {
   return await StockLedger.find(query)
     .sort({ movementAt: -1, createdAt: -1 })
     .limit(limit)
+    .populate("productId", "name sku")
+    .populate("warehouseId", "name")
     .lean();
 }

@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import Delivery from "@/models/Delivery";
-import { decreaseStock } from "@/services/stock-balance.service";
+import { decreaseStock, getStockBalance } from "@/services/stock-balance.service";
 import { createLedgerEntries } from "@/services/stock-ledger.service";
 
 type DeliveryItemInput = {
@@ -129,7 +129,32 @@ export async function updateDelivery(id: string, input: UpdateDeliveryInput) {
   await delivery.save();
   return delivery;
 }
+export async function checkAvailability(id: string) {
+  const delivery = await Delivery.findById(id);
+  if (!delivery) throw new Error("Delivery not found");
+  if (delivery.status === "Done" || delivery.status === "Canceled") {
+    throw new Error("Cannot check availability on a finalized order.");
+  }
 
+  let allAvailable = true;
+
+  for (const item of delivery.items) {
+    const stock = await getStockBalance({
+      productId: item.productId,
+      warehouseId: item.warehouseId,
+      locationId: item.locationId || null,
+    });
+
+    if (stock.quantity < item.quantity) {
+      allAvailable = false;
+      break;
+    }
+  }
+
+  delivery.status = allAvailable ? "Ready" : "Waiting";
+  await delivery.save();
+  return delivery;
+}
 export async function validateDelivery(id: string, validatedBy?: string) {
   const session = await mongoose.startSession();
 

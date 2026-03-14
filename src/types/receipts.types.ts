@@ -7,3 +7,4 @@ export interface Receipt {
   scheduleDate: string
   status: "Draft" | "Ready" | "Done"
 }
+
