@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Package2, Eye, EyeOff, Loader2 } from "lucide-react";
 import axios from "axios";
 
 export default function Login() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Changed loginId to email to match your backend logic!
   const [email, setEmail] = useState("");
@@ -33,18 +34,18 @@ export default function Login() {
         password,
       });
 
-      // Hackathon tip: Save the token to localStorage to use for future requests
-      localStorage.setItem("token", res.data.token);
-
       toast.success(res.data.message || "Welcome back! 🎉");
 
-      // Redirect to your main dashboard after short delay
+      const nextRoute = searchParams.get("next") || "/dashboard";
+
       setTimeout(() => {
-        router.push("/dashboard"); 
+        router.push(nextRoute);
       }, 1000);
 
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Invalid credentials";
+    } catch (error: unknown) {
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.message || "Invalid credentials"
+        : "Invalid credentials";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -150,7 +151,7 @@ export default function Login() {
           </form>
 
           <p className="text-center text-sm text-green-800/80 mt-8">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/signup" className="font-bold text-green-700 hover:text-green-800 transition-colors hover:underline underline-offset-4">
               Create one
             </Link>

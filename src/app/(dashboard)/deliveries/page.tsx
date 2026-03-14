@@ -10,13 +10,18 @@ export default function DeliveriesPage() {
   const router = useRouter();
   const { deliveries, fetchDeliveries, loading } = useDeliveriesStore();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => { fetchDeliveries(); }, [fetchDeliveries]);
 
-  const filtered = deliveries.filter(d => 
-    d.deliveryNo.toLowerCase().includes(search.toLowerCase()) ||
-    d.reference?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = deliveries.filter(d => {
+    const matchesSearch =
+      d.deliveryNo.toLowerCase().includes(search.toLowerCase()) ||
+      d.reference?.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" ? true : d.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto animate-in fade-in duration-500">
@@ -41,6 +46,18 @@ export default function DeliveriesPage() {
               value={search} onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium outline-none focus:border-[#00c853]"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Draft">Draft</option>
+            <option value="Waiting">Waiting</option>
+            <option value="Ready">Ready</option>
+            <option value="Done">Done</option>
+            <option value="Canceled">Canceled</option>
+          </select>
           <div className="flex items-center bg-gray-100 p-1 rounded-lg border">
             <button className="p-1.5 bg-white shadow-sm rounded-md text-[#00c853]"><LayoutList size={16}/></button>
             <button className="p-1.5 text-gray-400"><LayoutGrid size={16}/></button>

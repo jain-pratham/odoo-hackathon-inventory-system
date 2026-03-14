@@ -3,23 +3,46 @@
 import { useEffect, useState } from "react";
 import { useProductsStore } from "@/store/product.store";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Boxes } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import ProductsTable from "@/components/products/ProductsTable";
+import axios from "axios";
+
+type Category = {
+  _id: string;
+  name: string;
+};
 
 export default function ProductsPage() {
   const router = useRouter();
   const { products, fetchProducts, loading } = useProductsStore();
   const [search, setSearch] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState("All");
 
   useEffect(() => {
-    fetchProducts();
+    void fetchProducts();
+
+    const loadCategories = async () => {
+      const res = await axios.get("/api/categories");
+      const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      setCategories(data);
+    };
+
+    void loadCategories();
   }, [fetchProducts]);
 
-  const filtered = products.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.sku.toLowerCase().includes(search.toLowerCase()) ||
-    (p.categoryId?.name && p.categoryId.name.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filtered = products.filter(p => {
+    const matchesSearch =
+      p.name.toLowerCase().includes(search.toLowerCase()) || 
+      p.sku.toLowerCase().includes(search.toLowerCase()) ||
+      (p.categoryId?.name && p.categoryId.name.toLowerCase().includes(search.toLowerCase()));
+    const matchesCategory =
+      categoryFilter === "All"
+        ? true
+        : p.categoryId?.name === categoryFilter;
+
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="p-8 max-w-7xl mx-auto animate-in fade-in duration-500">
@@ -40,6 +63,18 @@ export default function ProductsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium outline-none focus:border-[#00c853]"
+        >
+          <option value="All">All Categories</option>
+          {categories.map((category) => (
+            <option key={category._id} value={category.name}>
+              {category.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {loading ? (

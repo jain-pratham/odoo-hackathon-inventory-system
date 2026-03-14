@@ -3,19 +3,24 @@
 import { useEffect, useState } from "react";
 import { useAdjustmentsStore } from "@/store/adjustments.store";
 import { useRouter } from "next/navigation";
-import { Plus, Search, ClipboardCheck, ArrowRight } from "lucide-react";
+import { Plus, Search, ArrowRight } from "lucide-react";
 
 export default function AdjustmentsPage() {
   const router = useRouter();
-  const { adjustments, fetchAdjustments, loading } = useAdjustmentsStore();
+  const { adjustments, fetchAdjustments } = useAdjustmentsStore();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => { fetchAdjustments(); }, [fetchAdjustments]);
 
-  const filtered = adjustments.filter(a => 
-    a.adjustmentNo.toLowerCase().includes(search.toLowerCase()) ||
-    a.reason?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = adjustments.filter(a => {
+    const matchesSearch =
+      a.adjustmentNo.toLowerCase().includes(search.toLowerCase()) ||
+      a.reason?.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" ? true : a.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="p-8 max-w-7xl mx-auto animate-in fade-in duration-500">
@@ -38,6 +43,18 @@ export default function AdjustmentsPage() {
             value={search} onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium outline-none focus:border-[#00c853]"
+        >
+          <option value="All">All Statuses</option>
+          <option value="Draft">Draft</option>
+          <option value="Waiting">Waiting</option>
+          <option value="Ready">Ready</option>
+          <option value="Done">Done</option>
+          <option value="Canceled">Canceled</option>
+        </select>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

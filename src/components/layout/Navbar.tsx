@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -11,8 +12,12 @@ import {
   Package2,
   Bell,
   Search,
-  ChevronDown
+  ChevronDown,
+  LogOut,
+  UserCircle2
 } from "lucide-react";
+import toast from "react-hot-toast";
+import { useProfileStore } from "@/store/profile.store";
 
 // Updated navItems to support submenus based on your sketch
 const navItems = [
@@ -23,6 +28,7 @@ const navItems = [
     submenu: [
       { name: "Receipts", href: "/receipts" },
       { name: "Deliveries", href: "/deliveries" },
+      { name: "Transfers", href: "/transfers" },
       { name: "Adjustments", href: "/adjustments" },
     ]
   },
@@ -40,6 +46,33 @@ const navItems = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, fetchProfile, logout } = useProfileStore();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      void fetchProfile();
+    }
+  }, [fetchProfile, user]);
+
+  const initials = user?.name
+    ?.split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "CI";
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out");
+      router.push("/login");
+      router.refresh();
+    } catch {
+      toast.error("Failed to log out");
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-lg border-b border-green-100 shadow-sm">
@@ -156,11 +189,46 @@ export default function Navbar() {
             <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
 
             {/* Profile Avatar */}
-            <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-green-600 to-emerald-400 flex items-center justify-center text-white font-semibold text-sm shadow-md border border-white">
-                A
-              </div>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen((open) => !open)}
+                className="flex items-center gap-2 rounded-full hover:opacity-80 transition-opacity"
+              >
+                <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-green-600 to-emerald-400 flex items-center justify-center text-white font-semibold text-sm shadow-md border border-white">
+                  {initials}
+                </div>
+              </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
+                  <div className="border-b border-gray-100 px-4 py-3">
+                    <p className="text-sm font-bold text-gray-900">{user?.name || "CoreInventory User"}</p>
+                    <p className="text-xs text-gray-500">{user?.email || "Loading profile..."}</p>
+                    <span className="mt-2 inline-flex rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-green-700">
+                      {user?.role || "staff"}
+                    </span>
+                  </div>
+
+                  <div className="p-2">
+                    <Link
+                      href="/profile"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-green-700"
+                    >
+                      <UserCircle2 className="h-4 w-4" />
+                      My Profile
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-red-50 hover:text-red-600"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             
           </div>
         </div>

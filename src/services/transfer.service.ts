@@ -1,5 +1,5 @@
-import mongoose, { Types } from "mongoose";
-import Transfer from "@/models/Transfer";
+import mongoose, { HydratedDocument, Types } from "mongoose";
+import Transfer, { ITransfer } from "@/models/Transfer";
 import {
   decreaseStock,
   increaseStock,
@@ -119,7 +119,12 @@ export async function getTransferById(id: string) {
     throw new Error("Invalid transfer id.");
   }
 
-  const transfer = await Transfer.findById(id);
+  const transfer = await Transfer.findById(id)
+    .populate("items.productId", "name sku unit")
+    .populate("items.fromWarehouseId", "name")
+    .populate("items.fromLocationId", "name")
+    .populate("items.toWarehouseId", "name")
+    .populate("items.toLocationId", "name");
 
   if (!transfer) {
     throw new Error("Transfer not found.");
@@ -137,7 +142,7 @@ export async function updateTransfer(id: string, input: UpdateTransferInput) {
 
   if (input.items) {
     validateTransferItems(input.items);
-    transfer.items = mapTransferItems(input.items) as any;
+    transfer.set("items", mapTransferItems(input.items));
   }
 
   if (input.reference !== undefined) {
@@ -166,7 +171,7 @@ export async function validateTransfer(id: string, validatedBy?: string) {
   const session = await mongoose.startSession();
 
   try {
-    let validatedTransfer: any = null;
+    let validatedTransfer: HydratedDocument<ITransfer> | null = null;
 
     await session.withTransaction(async () => {
       const transfer = await Transfer.findById(id).session(session);

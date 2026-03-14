@@ -1,6 +1,9 @@
 import nodemailer from "nodemailer";
 
 export const sendOTPEmail = async (email: string, otp: string) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error("Email credentials are not configured");
+  }
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
