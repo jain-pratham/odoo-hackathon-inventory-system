@@ -1,17 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Product from "@/models/product.model";
 import { getUserFromToken } from "@/lib/auth";
 import { getCache, setCache, deleteCacheByPattern } from "@/lib/cache";
-import { NextRequest } from "next/server";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type RouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export async function GET(_req: NextRequest, context: RouteContext) {
   await connectDB();
 
-  const { id } = await params;
+  const { id } = await context.params;
 
   const cacheKey = `products:detail:${id}`;
 
@@ -35,16 +37,13 @@ export async function GET(
   return NextResponse.json(product);
 }
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: NextRequest, context: RouteContext) {
   await connectDB();
 
   try {
     getUserFromToken(req);
 
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await req.json();
 
     const product = await Product.findByIdAndUpdate(id, body, { new: true });
@@ -71,16 +70,13 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, context: RouteContext) {
   await connectDB();
 
   try {
     getUserFromToken(req);
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     const product = await Product.findByIdAndDelete(id);
 
