@@ -9,7 +9,9 @@ export default function MoveHistoryPage() {
   const { entries, fetchLedger, loading } = useLedgerStore();
   const { warehouses, locations, fetchSettings } = useSettingsStore();
   const [search, setSearch] = useState("");
-  const [sourceType, setSourceType] = useState("");
+  const [sourceType, setSourceType] = useState<
+    "Receipt" | "Delivery" | "Transfer" | "Adjustment" | ""
+  >("");
   const [warehouseId, setWarehouseId] = useState("");
   const [locationId, setLocationId] = useState("");
 
@@ -59,7 +61,16 @@ export default function MoveHistoryPage() {
           </div>
           <select
             value={sourceType}
-            onChange={(event) => setSourceType(event.target.value)}
+            onChange={(event) =>
+              setSourceType(
+                event.target.value as
+                  | "Receipt"
+                  | "Delivery"
+                  | "Transfer"
+                  | "Adjustment"
+                  | "",
+              )
+            }
             className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm outline-none focus:border-green-500"
           >
             <option value="">All types</option>

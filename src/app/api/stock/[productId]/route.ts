@@ -1,15 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Stock from "@/models/stock.model";
 import { getCache, setCache } from "@/lib/cache";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { productId: string } }
-) {
+type RouteContext = {
+  params: Promise<{
+    productId: string;
+  }>;
+};
+
+export async function GET(_req: NextRequest, context: RouteContext) {
   await connectDB();
 
-  const cacheKey = `stock:product:${params.productId}`;
+  const { productId } = await context.params;
+  const cacheKey = `stock:product:${productId}`;
 
   const cached = await getCache(cacheKey);
 
@@ -18,7 +22,7 @@ export async function GET(
   }
 
   const stock = await Stock.find({
-    productId: params.productId
+    productId
   }).populate({
     path: "locationId",
     populate: { path: "warehouseId" }

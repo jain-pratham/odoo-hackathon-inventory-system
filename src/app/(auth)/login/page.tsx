@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Package2, Eye, EyeOff, Loader2 } from "lucide-react";
 import axios from "axios";
 
-export default function Login() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -159,5 +159,21 @@ export default function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-green-50/50">
+          <div className="text-sm font-semibold text-green-700">
+            Loading...
+          </div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { getDashboardKpis } from "@/services/dashboard.service";
+import {
+  DashboardSourceType,
+  DashboardStatus,
+} from "@/types/dashboard.types";
 
 export const dynamic = "force-dynamic";
 
@@ -9,9 +13,33 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
+    const sourceTypeParam = searchParams.get("sourceType");
+    const statusParam = searchParams.get("status");
+    const allowedSourceTypes: DashboardSourceType[] = [
+      "Receipt",
+      "Delivery",
+      "Transfer",
+      "Adjustment",
+    ];
+    const allowedStatuses: DashboardStatus[] = [
+      "Draft",
+      "Waiting",
+      "Ready",
+      "Done",
+      "Canceled",
+    ];
+    const sourceType =
+      sourceTypeParam &&
+      allowedSourceTypes.includes(sourceTypeParam as DashboardSourceType)
+        ? (sourceTypeParam as DashboardSourceType)
+        : "";
+    const status =
+      statusParam && allowedStatuses.includes(statusParam as DashboardStatus)
+        ? (statusParam as DashboardStatus)
+        : "";
     const kpis = await getDashboardKpis({
-      sourceType: searchParams.get("sourceType") || "",
-      status: searchParams.get("status") || "",
+      sourceType,
+      status,
       warehouseId: searchParams.get("warehouseId") || undefined,
       locationId: searchParams.get("locationId") || undefined,
       categoryId: searchParams.get("categoryId") || undefined,
